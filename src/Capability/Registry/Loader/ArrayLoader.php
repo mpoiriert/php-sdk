@@ -22,6 +22,7 @@ use Mcp\Capability\Registry\ElementReference;
 use Mcp\Capability\Registry\ReferenceRegistryInterface;
 use Mcp\Exception\ConfigurationException;
 use Mcp\Schema\Annotations;
+use Mcp\Schema\Icon;
 use Mcp\Schema\Prompt;
 use Mcp\Schema\PromptArgument;
 use Mcp\Schema\Resource;
@@ -45,6 +46,7 @@ final class ArrayLoader implements LoaderInterface
      *     name: ?string,
      *     description: ?string,
      *     annotations: ?ToolAnnotations,
+     *     icons: ?Icon[],
      *     meta: ?array<string, mixed>
      * }[] $tools
      * @param array{
@@ -55,6 +57,7 @@ final class ArrayLoader implements LoaderInterface
      *     mimeType: ?string,
      *     size: int|null,
      *     annotations: ?Annotations,
+     *     icons: ?Icon[],
      *     meta: ?array<string, mixed>
      * }[] $resources
      * @param array{
@@ -70,14 +73,15 @@ final class ArrayLoader implements LoaderInterface
      *     handler: Handler,
      *     name: ?string,
      *     description: ?string,
+     *     icons: ?Icon[],
      *     meta: ?array<string, mixed>
      * }[] $prompts
      */
     public function __construct(
-        private array $tools = [],
-        private array $resources = [],
-        private array $resourceTemplates = [],
-        private array $prompts = [],
+        private readonly array $tools = [],
+        private readonly array $resources = [],
+        private readonly array $resourceTemplates = [],
+        private readonly array $prompts = [],
         private LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -106,7 +110,7 @@ final class ArrayLoader implements LoaderInterface
 
                 $inputSchema = $data['inputSchema'] ?? $schemaGenerator->generate($reflection);
 
-                $tool = new Tool($name, $inputSchema, $description, $data['annotations'], $data['meta'] ?? null);
+                $tool = new Tool($name, $inputSchema, $description, $data['annotations'], $data['icons'], $data['meta'] ?? null);
                 $registry->registerTool($tool, $data['handler'], true);
 
                 $handlerDesc = $this->getHandlerDescription($data['handler']);
@@ -137,13 +141,16 @@ final class ArrayLoader implements LoaderInterface
                     $description = $data['description'] ?? $docBlockParser->getSummary($docBlock) ?? null;
                 }
 
-                $uri = $data['uri'];
-                $mimeType = $data['mimeType'];
-                $size = $data['size'];
-                $annotations = $data['annotations'];
-                $meta = $data['meta'];
-
-                $resource = new Resource($uri, $name, $description, $mimeType, $annotations, $size, $meta);
+                $resource = new Resource(
+                    $data['uri'],
+                    $name,
+                    $description,
+                    $data['mimeType'],
+                    $data['annotations'],
+                    $data['size'],
+                    $data['icons'],
+                    $data['meta'],
+                );
                 $registry->registerResource($resource, $data['handler'], true);
 
                 $handlerDesc = $this->getHandlerDescription($data['handler']);
@@ -174,12 +181,14 @@ final class ArrayLoader implements LoaderInterface
                     $description = $data['description'] ?? $docBlockParser->getSummary($docBlock) ?? null;
                 }
 
-                $uriTemplate = $data['uriTemplate'];
-                $mimeType = $data['mimeType'];
-                $annotations = $data['annotations'];
-                $meta = $data['meta'];
-
-                $template = new ResourceTemplate($uriTemplate, $name, $description, $mimeType, $annotations, $meta);
+                $template = new ResourceTemplate(
+                    $data['uriTemplate'],
+                    $name,
+                    $description,
+                    $data['mimeType'],
+                    $data['annotations'],
+                    $data['meta'],
+                );
                 $completionProviders = $this->getCompletionProviders($reflection);
                 $registry->registerResourceTemplate($template, $data['handler'], $completionProviders, true);
 
@@ -230,8 +239,7 @@ final class ArrayLoader implements LoaderInterface
                         !$param->isOptional() && !$param->isDefaultValueAvailable(),
                     );
                 }
-                $meta = $data['meta'];
-                $prompt = new Prompt($name, $description, $arguments, $meta);
+                $prompt = new Prompt($name, $description, $arguments, $data['icons'], $data['meta']);
                 $completionProviders = $this->getCompletionProviders($reflection);
                 $registry->registerPrompt($prompt, $data['handler'], $completionProviders, true);
 

@@ -83,6 +83,7 @@ final class Builder
      *     name: ?string,
      *     description: ?string,
      *     annotations: ?ToolAnnotations,
+     *     icons: ?Icon[],
      *     meta: ?array<string, mixed>
      * }[]
      */
@@ -97,6 +98,7 @@ final class Builder
      *     mimeType: ?string,
      *     size: int|null,
      *     annotations: ?Annotations,
+     *     icons: ?Icon[],
      *     meta: ?array<string, mixed>
      * }[]
      */
@@ -120,6 +122,7 @@ final class Builder
      *     handler: Handler,
      *     name: ?string,
      *     description: ?string,
+     *     icons: ?Icon[],
      *     meta: ?array<string, mixed>
      * }[]
      */
@@ -315,6 +318,7 @@ final class Builder
      *
      * @param Handler                   $handler
      * @param array<string, mixed>|null $inputSchema
+     * @param ?Icon[]                   $icons
      */
     public function addTool(
         callable|array|string $handler,
@@ -322,8 +326,16 @@ final class Builder
         ?string $description = null,
         ?ToolAnnotations $annotations = null,
         ?array $inputSchema = null,
+        ?array $icons = null,
     ): self {
-        $this->tools[] = compact('handler', 'name', 'description', 'annotations', 'inputSchema');
+        $this->tools[] = compact(
+            'handler',
+            'name',
+            'description',
+            'annotations',
+            'inputSchema',
+            'icons',
+        );
 
         return $this;
     }
@@ -332,6 +344,7 @@ final class Builder
      * Manually registers a resource handler.
      *
      * @param Handler $handler
+     * @param ?Icon[] $icons
      */
     public function addResource(
         \Closure|array|string $handler,
@@ -341,8 +354,18 @@ final class Builder
         ?string $mimeType = null,
         ?int $size = null,
         ?Annotations $annotations = null,
+        ?array $icons = null,
     ): self {
-        $this->resources[] = compact('handler', 'uri', 'name', 'description', 'mimeType', 'size', 'annotations');
+        $this->resources[] = compact(
+            'handler',
+            'uri',
+            'name',
+            'description',
+            'mimeType',
+            'size',
+            'annotations',
+            'icons',
+        );
 
         return $this;
     }
@@ -376,10 +399,15 @@ final class Builder
      * Manually registers a prompt handler.
      *
      * @param Handler $handler
+     * @param ?Icon[] $icons
      */
-    public function addPrompt(\Closure|array|string $handler, ?string $name = null, ?string $description = null): self
-    {
-        $this->prompts[] = compact('handler', 'name', 'description');
+    public function addPrompt(
+        \Closure|array|string $handler,
+        ?string $name = null,
+        ?string $description = null,
+        ?array $icons = null,
+    ): self {
+        $this->prompts[] = compact('handler', 'name', 'description', 'icons');
 
         return $this;
     }
